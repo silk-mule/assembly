@@ -1,0 +1,58 @@
+include 'emu8086.inc'
+.model small
+.stack 100h
+.data
+.code
+main proc
+
+    ; --- Read Input ---
+    print 'Enter a character (0-9, a-z, or A-Z): '
+    mov ah, 01h
+    int 21h      ; AL holds the ASCII value of the input character
+
+    ; --- Increment Character ---
+    add al, 1    ; Increment AL by 1 to get the next ASCII character
+    mov bl, al   ; Temporarily save the incremented character in BL
+    
+    ; --- Check and Wrap Logic ---
+    
+    ; 1. Check if the character is 'A' (if it wrapped from 'Z')
+    cmp bl, 'Z' + 1      ; Check if BL is one past 'Z' (i.e., '[')
+    jne check_9          ; If not, skip to checking the digits
+    mov bl, 'A'          ; If it wrapped from 'Z', set BL back to 'A'
+    jmp print_result     ; Jump straight to printing
+
+check_9:
+    ; 2. Check if the character is '0' (if it wrapped from '9')
+    cmp bl, '9' + 1      ; Check if BL is one past '9' (i.e., ':')
+    jne check_z          ; If not, skip to checking lowercase letters
+    mov bl, '0'          ; If it wrapped from '9', set BL back to '0'
+    jmp print_result     ; Jump straight to printing
+
+check_z:
+    ; 3. Check if the character is 'a' (if it wrapped from 'z')
+    cmp bl, 'z' + 1      ; Check if BL is one past 'z' (i.e., '{')
+    jne print_result     ; If not, the character is valid (or non-wrapping), print it
+    mov bl, 'a'          ; If it wrapped from 'z', set BL back to 'a'
+
+print_result:
+    ; --- Print Newline ---
+    mov dl , 13
+    mov ah , 02h
+    int 21h
+    mov dl , 10
+    mov ah , 02h
+    int 21h
+    
+    ; --- Print Result ---
+    print 'The next character is: '
+    mov dl, bl           ; Load the (potentially wrapped) character into DL
+    mov ah, 02h
+    int 21h
+    
+    ; Exit program
+    mov ah, 4Ch
+    int 21h
+    
+main endp
+end main
